@@ -66,7 +66,7 @@ dropout = 0.2  # dropout probability
 model = TransformerModel(ntokens, emsize, nhead, d_hid, nlayers, dropout).to(device)
 
 best_val_loss = float('inf')
-epochs = 3
+epochs = 1
 
 lr = 5.0  # learning rate
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
@@ -78,7 +78,7 @@ with TemporaryDirectory() as tempdir:
     for epoch in range(1, epochs + 1):
         epoch_start_time = time.time()
         train(model, train_data, bptt, ntokens, epoch, scheduler, optimizer, lr)
-        val_loss = evaluate(model, val_data)
+        val_loss = evaluate(model, test_data, bptt, ntokens)
         val_ppl = math.exp(val_loss)
         elapsed = time.time() - epoch_start_time
         print('-' * 89)
