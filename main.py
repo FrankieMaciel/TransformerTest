@@ -5,6 +5,7 @@ import math
 import os
 from tempfile import TemporaryDirectory
 import time
+from torch import nn, Tensor
 
 import torch
 from torch import Tensor
@@ -72,9 +73,11 @@ lr = 5.0  # learning rate
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
 
-with TemporaryDirectory() as tempdir:
-    best_model_params_path = os.path.join(tempdir, "best_model_params.pt")
+best_model_params_path = os.path.join('trainedModels', "best_model_params.pt")
 
+TrainMode = False
+
+if (TrainMode):
     for epoch in range(1, epochs + 1):
         epoch_start_time = time.time()
         train(model, train_data, bptt, ntokens, epoch, scheduler, optimizer, lr)
@@ -91,11 +94,29 @@ with TemporaryDirectory() as tempdir:
             torch.save(model.state_dict(), best_model_params_path)
 
         scheduler.step()
-    model.load_state_dict(torch.load(best_model_params_path)) # load best model 
 
-test_loss = evaluate(model, test_data, bptt, ntokens)
-test_ppl = math.exp(test_loss)
-print('=' * 89)
-print(f'| End of training | test loss {test_loss:5.2f} | '
-    f'test ppl {test_ppl:8.2f}')
-print('=' * 89)
+model.load_state_dict(torch.load(best_model_params_path)) # load best model 
+
+exampleText = 'Moon is a'
+dataExemple = torch.tensor(vocab(tokenizer(exampleText)), dtype=torch.long)
+print(dataExemple)
+
+output = model(dataExemple)
+output_flat = output.view(-1, ntokens)
+
+output_softmax = nn.functional.softmax(output_flat, dim=1)
+
+max_prob_vector = torch.argmax(output_softmax, dim=1)
+token_indices = max_prob_vector.tolist()
+print(token_indices)
+
+tokens = vocab.lookup_tokens(token_indices)
+print(tokens)
+
+# test_loss = evaluate(model, test_data, bptt, ntokens)
+# test_ppl = math.exp(test_loss)
+# print('=' * 89)
+# print(f'| End of training | test loss {test_loss:5.2f} | '
+#     f'test ppl {test_ppl:8.2f}')
+# print('=' * 89)
+
